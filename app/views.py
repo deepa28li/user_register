@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+import math,random
 # Create your views here.
 from app.forms import *
 from django.http import HttpResponse,HttpResponseRedirect
@@ -7,6 +7,10 @@ from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+
+
+
+# ------------------User reg------------------
 
 def registration(request):
     ufo=UserForm()
@@ -34,7 +38,7 @@ def registration(request):
             return HttpResponse('Invalid data')
     return render(request,'registration.html',d)
 
-
+# ------------------home page session-------------------
 
 def home(request):
     if request.session.get('username'):
@@ -43,6 +47,7 @@ def home(request):
         return render(request,'home.html',d)
     return render(request,'home.html')
 
+# --------------user login--------------------------
 
 def user_login(request):
     if request.method=='POST':
@@ -57,11 +62,14 @@ def user_login(request):
             HttpResponse('Invalid credentials')
     return render(request,'user_login.html')
 
+# -------------------logout------------------------------
+
 @login_required
 def user_logout(request):
     logout(request)
     return HttpResponseRedirect(reverse('home'))
 
+# ------------------display profile------------------------
 
 @login_required
 def profile_display(request):
@@ -70,3 +78,37 @@ def profile_display(request):
     PO=Profile.objects.get(username=UO)
     d={'UO':UO,'PO':PO}
     return render(request,'profile_display.html',d)
+
+# ------------------change passowrd---------------------
+
+@login_required
+def change_password(request):
+    if request.method=='POST':
+        pw=request.POST['pw']
+        username=request.session.get('username')
+        UO=User.objects.get(username=username)
+        UO.set_password(pw)
+        UO.save()
+        return HttpResponse('password successfully changed')
+    
+    return render(request,'change_password.html')
+
+
+# ------------------forget password------------------------------
+def reset_password(request):
+    if request.method=='POST':
+        username=request.POST['un']
+        password=request.POST['pw']
+
+        LUO=User.objects.filter(username=username)
+        if LUO:
+            UO=LUO[0]
+            UO.set_password(password)
+            UO.save()
+            return HttpResponse('Reset password is done')
+        else:
+            return HttpResponseRedirect(reverse(user_login))
+    return render(request,'reset_password.html')
+
+
+
